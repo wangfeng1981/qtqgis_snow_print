@@ -8,6 +8,7 @@
 #include "qgsapplication.h"
 
 #include <iostream>
+#include <fstream>
 #include "qgsproject.h"
 #include "qgslayout.h"
 #include "qgsprintlayout.h"
@@ -20,18 +21,67 @@
 #include "qgslayoutitemmapgrid.h"
 #include "qgslayoutitempicture.h"
 #include "qgslayoutitem.h"
+#include "qgsfeature.h"
+#include "qgsfeaturerequest.h"
+#include "qgsfeaturesource.h"
+#include "qgis_core.h"
+#include "qgsrenderer.h"
+#include "qgssymbollayer.h"
+#include "qgssinglesymbolrenderer.h"
+#include "qgsfillsymbollayer.h"
+
+#include "../sharedcodes2/ajson5.h"
 
 using namespace std;
-
+using namespace ArduinoJson;
 
 int main(int argc, char *argv[])
 {
+    qDebug()<<"A program to print map." ;
+    qDebug()<<"usage:qtqgis_snow_print config.json input.tif out.png" ;
+    qDebug()<<"v1.0" ;//2020-10-14
+
+//    if( argc!=4 )
+//    {
+//        qDebug()<<"no enough params (4)." ;
+//        return 11 ;
+//    }
+
+//    string configfile = argv[1];
+//    string inputfile = argv[2];
+//    string outfile = argv[3] ;
+
+    string configfile = "D:/coding/qtqgis_snow_print/print.json";
+    string inputfile = "F:/test-snow.tif";
+    string outfile = "D:/test-snow-print.png" ;
+
+    cout<<"configfile:"<<configfile<<endl;
+    cout<<"inputfile:"<<inputfile<<endl;
+    cout<<"outfile:"<<outfile<<endl;
+
+    string landshpfile = "";
+    string legendfile = "";
+    string projdir = "" ;
+
+    {
+        ifstream ifs(configfile.c_str()) ;
+        DynamicJsonBuffer dynbuffer;
+        JsonObject& jsonroot = dynbuffer.parse(ifs) ;
+        landshpfile = jsonroot["landshp"].as<char*>();
+        legendfile = jsonroot["legend"].as<char*>();
+        projdir = jsonroot["projdir"].as<char*>();
+    }
+    cout<<"landshpfile:"<<landshpfile<<endl;
+    cout<<"legendfile:"<<legendfile<<endl;
+    cout<<"projdir:"<<projdir<<endl ;
+
+
     //QCoreApplication a(argc, argv);
     QDir currdir = QDir::currentPath() ;
     qDebug()<< currdir.path() ;
     QgsApplication::setPrefixPath( currdir.path() );
     // "PROJ_LIB: C:\Program Files\GDAL\projlib"
-    qputenv("PROJ_LIB","D:\\coding\\build-qtqgis_snow_print-unknown-Release\\release\\share\\proj");
+    qputenv("PROJ_LIB",projdir.c_str());
 
     QgsApplication a(argc,argv,false);
     QgsApplication::initQgis();
@@ -42,14 +92,31 @@ int main(int argc, char *argv[])
 
     QgsRasterLayer* rasterLayer = new
         QgsRasterLayer(
-            "F:\\test-snow.tif",
+            QString(inputfile.c_str()),
             "raster",
             "gdal");
-    if(rasterLayer->isValid())
+
+    QgsVectorLayer* landlayer = new QgsVectorLayer( QString(landshpfile.c_str()) , "land", "ogr");
+
+    if(rasterLayer->isValid() && landlayer->isValid() )
     {
+        cout<<"shp layer is good."<<endl;
+
+        //make line color
+        QgsFeatureRenderer* featureRender = landlayer->renderer();
+        QgsRenderContext qrcontext;
+        QgsSymbolList symlist = featureRender->symbols( qrcontext );
+        QgsSymbol* symbol0 = symlist[0];
+        QgsSymbolLayer* symlayer = symbol0->symbolLayer(0);
+        QgsSimpleFillSymbolLayer* symlayer1 = (QgsSimpleFillSymbolLayer *)symlayer;
+        symlayer1->setStrokeWidth(0.1);
+        symlayer->setStrokeColor( QColor(128,128,0)) ;
+        symlayer->setFillColor( QColor(0,0,0,0)) ;
+
 
         cout<<"raster layer is good."<<endl ;
         project->addMapLayer(rasterLayer,true) ;
+        project->addMapLayer(landlayer,true);
 
         //set renderer
         QList<QgsColorRampShader::ColorRampItem> crlist ;
@@ -113,7 +180,7 @@ int main(int argc, char *argv[])
         //legend
         QgsLayoutItemPicture* picture = new QgsLayoutItemPicture(&layout) ;
         picture->setRect(0.0,0.0,80.0,10.0) ;
-        picture->setPicturePath( QStringLiteral( "D:/coding/qtqgis_snow_print/legend.png" ) );
+        picture->setPicturePath( QString(legendfile.c_str()) );
         layout.addLayoutItem(picture);
         picture->attemptMove( QgsLayoutPoint(20,124) );
 
@@ -121,7 +188,7 @@ int main(int argc, char *argv[])
         QgsLayoutExporter exporter(&layout);
         QgsLayoutExporter::ImageExportSettings esetting = QgsLayoutExporter::ImageExportSettings() ;
         esetting.cropToContents =true ;
-        exporter.exportToImage("D:/testqtqgis.png" , esetting);
+        exporter.exportToImage( QString(outfile.c_str()) , esetting);
 
         cout<<"export done."<<endl ;
 
