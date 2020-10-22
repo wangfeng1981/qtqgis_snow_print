@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.11.1, 2020-10-14T06:39:28. -->
+<!-- Written by QtCreator 4.11.1, 2020-10-21T20:04:56. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -289,7 +289,7 @@
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:D:/coding/qtqgis_snow_print/qtqgis_snow_print.pro</value>
     <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">D:/coding/qtqgis_snow_print/qtqgis_snow_print.pro</value>
-    <value type="QString" key="RunConfiguration.Arguments"></value>
+    <value type="QString" key="RunConfiguration.Arguments">D:/coding/qtqgis_snow_print/print.json &quot;Snow Cover 20200101 0800&quot; F:/test-snow.tif D:/test-snow-print-2.png</value>
     <value type="bool" key="RunConfiguration.Arguments.multi">false</value>
     <value type="QString" key="RunConfiguration.OverrideDebuggerStartup"></value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>

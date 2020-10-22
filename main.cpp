@@ -29,6 +29,7 @@
 #include "qgssymbollayer.h"
 #include "qgssinglesymbolrenderer.h"
 #include "qgsfillsymbollayer.h"
+#include "qgslayoutitemlabel.h"
 
 #include "../sharedcodes2/ajson5.h"
 
@@ -38,24 +39,27 @@ using namespace ArduinoJson;
 int main(int argc, char *argv[])
 {
     qDebug()<<"A program to print map." ;
-    qDebug()<<"usage:qtqgis_snow_print config.json input.tif out.png" ;
+    qDebug()<<"usage:qtqgis_snow_print config.json title input.tif out.png" ;
     qDebug()<<"v1.0" ;//2020-10-14
+    qDebug()<<"v1.1" ;//2020-10-17
 
-//    if( argc!=4 )
-//    {
-//        qDebug()<<"no enough params (4)." ;
-//        return 11 ;
-//    }
+    if( argc!=5 )
+    {
+        qDebug()<<"no enough params (5)." ;
+        return 11 ;
+    }
 
-//    string configfile = argv[1];
-//    string inputfile = argv[2];
-//    string outfile = argv[3] ;
+    string configfile = argv[1];
+    string title = argv[2];
+    string inputfile = argv[3];
+    string outfile = argv[4] ;
 
-    string configfile = "D:/coding/qtqgis_snow_print/print.json";
-    string inputfile = "F:/test-snow.tif";
-    string outfile = "D:/test-snow-print.png" ;
+//    string configfile = "D:/coding/qtqgis_snow_print/print.json";
+//    string inputfile = "F:/test-snow.tif";
+//    string outfile = "D:/test-snow-print-1.png" ;
 
     cout<<"configfile:"<<configfile<<endl;
+    cout<<"title:"<<title<<endl;
     cout<<"inputfile:"<<inputfile<<endl;
     cout<<"outfile:"<<outfile<<endl;
 
@@ -96,27 +100,27 @@ int main(int argc, char *argv[])
             "raster",
             "gdal");
 
-    QgsVectorLayer* landlayer = new QgsVectorLayer( QString(landshpfile.c_str()) , "land", "ogr");
+//    QgsVectorLayer* landlayer = new QgsVectorLayer( QString(landshpfile.c_str()) , "land", "ogr");
 
-    if(rasterLayer->isValid() && landlayer->isValid() )
+    if(rasterLayer->isValid() )// && landlayer->isValid()
     {
         cout<<"shp layer is good."<<endl;
 
         //make line color
-        QgsFeatureRenderer* featureRender = landlayer->renderer();
-        QgsRenderContext qrcontext;
-        QgsSymbolList symlist = featureRender->symbols( qrcontext );
-        QgsSymbol* symbol0 = symlist[0];
-        QgsSymbolLayer* symlayer = symbol0->symbolLayer(0);
-        QgsSimpleFillSymbolLayer* symlayer1 = (QgsSimpleFillSymbolLayer *)symlayer;
-        symlayer1->setStrokeWidth(0.1);
-        symlayer->setStrokeColor( QColor(128,128,0)) ;
-        symlayer->setFillColor( QColor(0,0,0,0)) ;
+//        QgsFeatureRenderer* featureRender = landlayer->renderer();
+//        QgsRenderContext qrcontext;
+//        QgsSymbolList symlist = featureRender->symbols( qrcontext );
+//        QgsSymbol* symbol0 = symlist[0];
+//        QgsSymbolLayer* symlayer = symbol0->symbolLayer(0);
+//        QgsSimpleFillSymbolLayer* symlayer1 = (QgsSimpleFillSymbolLayer *)symlayer;
+//        symlayer1->setStrokeWidth(0.1);
+//        symlayer->setStrokeColor( QColor(128,128,0)) ;
+//        symlayer->setFillColor( QColor(0,0,0,0)) ;
 
 
         cout<<"raster layer is good."<<endl ;
         project->addMapLayer(rasterLayer,true) ;
-        project->addMapLayer(landlayer,true);
+        //project->addMapLayer(landlayer,true);
 
         //set renderer
         QList<QgsColorRampShader::ColorRampItem> crlist ;
@@ -145,9 +149,15 @@ int main(int argc, char *argv[])
         QgsLayout layout( project ) ;
         layout.initializeDefaults();
 
+        //add title
+        QgsLayoutItemLabel* labelTitle = new QgsLayoutItemLabel(&layout);
+        labelTitle->setRect(0,0,100,10);
+        labelTitle->setText( QString(title.c_str()) );
+        //layout.addLayoutItem(labelTitle);
+        labelTitle->attemptMove( QgsLayoutPoint(20,10) );
 
         QgsLayoutItemMap* mapitem = QgsLayoutItemMap::create(&layout) ;
-        mapitem->setRect( 0.0,0.0,40.0,40.0);
+        mapitem->setRect( 0.0,0.0,40.0,27.5);
         mapitem->zoomToExtent(rasterLayer->extent());
         mapitem->setFrameEnabled(true);
         mapitem->setCrs(QgsCoordinateReferenceSystem("EPSG:4326"));//must set crs, if not grid display a mess.
@@ -172,25 +182,26 @@ int main(int argc, char *argv[])
         grid0->setAnnotationEnabled(true);
         grid0->setAnnotationFormat( QgsLayoutItemMapGrid::DecimalWithSuffix);
         grid0->setAnnotationPrecision(0);
-        mapitem->grids()->addGrid(grid0);
+        //mapitem->grids()->addGrid(grid0);
 
         mapitem->attemptMove( QgsLayoutPoint(20,20) ) ;//left top margin 5mm x 5mm
-        mapitem->attemptResize( QgsLayoutSize(100,100) ) ;//10cmx10cm full page is A4 21cmx29.7cm
+        mapitem->attemptResize( QgsLayoutSize(100, 100.0/4000*2750) ) ;//10cmx10cm full page is A4 21cmx29.7cm
 
         //legend
         QgsLayoutItemPicture* picture = new QgsLayoutItemPicture(&layout) ;
         picture->setRect(0.0,0.0,80.0,10.0) ;
         picture->setPicturePath( QString(legendfile.c_str()) );
-        layout.addLayoutItem(picture);
+        //layout.addLayoutItem(picture);
         picture->attemptMove( QgsLayoutPoint(20,124) );
 
 
         QgsLayoutExporter exporter(&layout);
         QgsLayoutExporter::ImageExportSettings esetting = QgsLayoutExporter::ImageExportSettings() ;
         esetting.cropToContents =true ;
+
         exporter.exportToImage( QString(outfile.c_str()) , esetting);
 
-        cout<<"export done."<<endl ;
+        cout<<"export done:"<< outfile <<endl ;
 
 //        layoutImagePath = os.path.join(QgsProject.instance().homePath(), "layoutimage.png")
 //        exporter = QgsLayoutExporter(layout)

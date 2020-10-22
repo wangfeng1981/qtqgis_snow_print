@@ -1,5 +1,8 @@
 
-QT += core gui xml widgets
+QT += core gui xml widgets webenginewidgets
+
+
+
 
 CONFIG += c++11 console
 CONFIG -= app_bundle
@@ -26,6 +29,8 @@ INCLUDEPATH += "C:\Qt\Qt5.14.2\5.14.2\msvc2017\include"
 INCLUDEPATH += "C:\Qt\Qt5.14.2\5.14.2\msvc2017\include\QtWidgets"
 INCLUDEPATH += "C:\Qt\Qt5.14.2\5.14.2\msvc2017\include\QtPrintSupport"
 INCLUDEPATH += "C:\Qt\Qt5.14.2\5.14.2\msvc2017\include\QtSvg"
+INCLUDEPATH += "C:\Qt\Qt5.14.2\5.14.2\msvc2017\include\QtWebEngineWidgets"
+
 LIBS += -L"C:\Qt\Qt5.14.2\5.14.2\msvc2017\lib"
 LIBS += -L"C:\OSGeo4W\apps\Qt5\lib"
 LIBS += -L"C:\OSGeo4W\apps\qgis-ltr\lib" -lqgis_core -lqgis_gui -lqgis_app
